@@ -34,8 +34,17 @@ class OthelloBot:
     def is_valid_move(self, x, y, color):
         return True
 
-    def evaluate_board_cost(self, temp_board, color):
-        return 1
+    # This function assumes temp_board is already set up with all the correct pieces according to game logic,
+    # ready for processing
+    @staticmethod
+    def evaluate_board_cost(temp_board, color):
+        cost = 0
+        for row in temp_board:
+            for tile in row:
+                if tile is color:
+                    cost += 1
+
+        return cost
 
     # Returns a list of all legal moves for a given board state
     def get_all_moves(self, board):
