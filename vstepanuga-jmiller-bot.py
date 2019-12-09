@@ -1,6 +1,5 @@
 import copy
 
-
 class OthelloBot:
     def __init__(self, board_size):
         self.board = []
@@ -48,7 +47,8 @@ class OthelloBot:
 
     # Returns a list of all legal moves for a given board state
     def get_all_moves(self, board):
-        return [['B', (4, 5)]]
+        return [['B', (3, 5)]]
+        # return OthelloEngine.get_all_moves()
 
 
 if __name__ == '__main__':
