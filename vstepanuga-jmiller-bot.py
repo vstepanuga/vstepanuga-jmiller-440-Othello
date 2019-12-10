@@ -1,21 +1,30 @@
 import copy
 
+import OthelloEngine
+
+
 class OthelloBot:
-    def __init__(self, board_size):
+    def __init__(self):
         self.board = []
-        self.initialize_board(board_size)
+        self.initialize_board(8)
+        self.piece_hash = []
+        self.adjacencies = OthelloEngine.get_adjacencies()
 
     def initialize_board(self, board_size):
-        for i in range(board_size):
-            temp = []
-            for j in range(board_size):
-                temp.append('-')
-            self.board.append(temp)
+        self.board = [['-' for j in range(board_size)] for i in range(board_size)]
+        self.board[3][3] = 'B'
+        self.board[3][4] = 'W'
+        self.board[4][3] = 'W'
+        self.board[4][4] = 'B'
+        self.piece_hash.append(['B', (3, 3)])
+        self.piece_hash.append(['W', (3, 4)])
+        self.piece_hash.append(['W', (4, 3)])
+        self.piece_hash.append(['B', (4, 4)])
 
     # Function responsible for making the most powerful move in the 2 second span.
     # Returns a move: (Color, (X, Y))
-    def make_move(self):
-        legal_moves = self.get_all_moves(self.board)
+    def get_move(self):
+        legal_moves = self.get_all_moves('W')
         evaluated_moves = []
 
         for move in legal_moves:
@@ -46,11 +55,20 @@ class OthelloBot:
         return cost
 
     # Returns a list of all legal moves for a given board state
-    def get_all_moves(self, board):
-        return [['B', (3, 5)]]
-        # return OthelloEngine.get_all_moves()
+    def get_all_moves(self, color):
+        moves = []
+
+        for piece in self.piece_hash:
+            if piece[0] != color:
+                x = piece[1][0]
+                y = piece[1][1]
+                for adjacency in self.adjacencies:
+                    if OthelloEngine.is_valid_move(x, y, adjacency[0], adjacency[1], self.board, color, False):
+                        moves.append([color, (x, y)])
+
+        return moves
 
 
 if __name__ == '__main__':
-    test = OthelloBot(8)
-    print(test.make_move())
+    test = OthelloBot()
+    print(test.get_move())
