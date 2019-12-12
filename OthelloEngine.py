@@ -77,7 +77,7 @@ class GameEngine:
                   self.update_board(self.game_state, move)
                   self.all_moves.append(move)
 
-                  gameEnd = check_end(self.game_state);
+                  gameEnd = self.check_end(self.game_state);
                   if gameEnd != None:
                      return gameEnd
 
