@@ -5,13 +5,10 @@ import OthelloEngine
 
 class OthelloBot:
     def __init__(self, color, board_size=8, time_limit=2.0):
-        self.board = []
         self.global_min = 65
         self.global_max = -1
         self.color = color
-        self.initialize_board(board_size)
         self.time_limit = time_limit
-        # self.initialize_test_board(8)
         self.adjacencies = OthelloEngine.get_adjacencies()
 
     # def initialize_test_board(self, board_size):
@@ -21,13 +18,6 @@ class OthelloBot:
     #     self.board[2][0] = "B"
     #     self.piece_hash["20"] = "B"
 
-    def initialize_board(self, board_size):
-        self.board = [['-' for j in range(board_size)] for i in range(board_size)]
-        self.board[3][3] = 'B'
-        self.board[3][4] = 'W'
-        self.board[4][3] = 'W'
-        self.board[4][4] = 'B'
-
     def make_move(self, board, move, piece_hash, real_move=False):
         if move is not None:
             color = move[0]
@@ -35,6 +25,8 @@ class OthelloBot:
             y = move[1][1]
 
             board[x][y] = color
+            if real_move:
+                piece_hash[str(x) + str(y)] = color
             for adjacency in self.adjacencies:
                 self.make_move_helper(board, x, y, adjacency[0], adjacency[1], piece_hash, color, real_move)
 
@@ -73,11 +65,14 @@ class OthelloBot:
         color = self.color
         self.global_min = 65
         self.global_max = -1
-        return tuple(self.evaluate_alphabeta_tree(2, board, color, True)[0])
+        result = self.evaluate_alphabeta_tree(2, board, color, True)
+        if result is not None:
+            return tuple(self.evaluate_alphabeta_tree(2, board, color, True)[0])
+        return None
 
     # Function for just returning a tree based on the current self.board as well as the color of the player
     def evaluate_alphabeta_tree(self, depth, board, color, you):
-        board = copy.deepcopy(board)
+        # board = copy.deepcopy(board)
         piece_hash = self.build_piece_hash(board)
 
         legal_moves = self.get_all_moves(board, piece_hash, color)
@@ -94,10 +89,11 @@ class OthelloBot:
                 temp_board = copy.deepcopy(board)
                 evaluated_moves.append([move, self.evaluate_move(temp_board, piece_hash, move)])
 
-            if you:
-                return max(evaluated_moves, key=lambda item: item[1])
-            else:
-                return min(evaluated_moves, key=lambda item: item[1])
+            if len(evaluated_moves) > 0:
+                if you:
+                    return max(evaluated_moves, key=lambda item: item[1])
+                else:
+                    return min(evaluated_moves, key=lambda item: item[1])
 
         for move in legal_moves:
             temp_board = copy.deepcopy(board)
@@ -112,26 +108,30 @@ class OthelloBot:
             # Swap the color when coming back from recursive depth to change player.
             color = self.color_swap(color)
 
-            if you:
-                if temp_move[1] < self.global_max:
-                    return temp_move
+            if temp_move is not None:
+                if you:
+                    if temp_move[1] > self.global_max:
+                        self.global_max = temp_move[1]
+                else:
+                    if temp_move[1] < self.global_min:
+                        self.global_min = temp_move[1]
 
-                depth_alphabeta_costs.append(temp_move)
-                self.global_max = temp_move[1]
-            else:
-                if temp_move[1] > self.global_min:
-                    return temp_move
+                if depth is not 2:
+                    if you:
+                        if temp_move[1] > self.global_min:
+                            return temp_move
+                    else:
+                        if temp_move[1] < self.global_max:
+                            return temp_move
 
-                depth_alphabeta_costs.append(temp_move)
-                self.global_min = temp_move[1]
-
+                depth_alphabeta_costs.append([move, temp_move[1]])
         if len(depth_alphabeta_costs) > 0:
             if you:
                 return max(depth_alphabeta_costs, key=lambda item: item[1])
             else:
                 return min(depth_alphabeta_costs, key=lambda item: item[1])
         else:
-            return [[color, (0, 0)], 0]
+            return None
 
     # Function which counts the move cost
     def evaluate_move(self, board, piece_hash, move):
@@ -164,10 +164,10 @@ class OthelloBot:
                         moves.append([color, (x + adjacency[0], y + adjacency[1])])
         return moves
 
-    def check_win(self):
+    def check_win(self, board):
         white_pieces = 0
         black_pieces = 0
-        for row in self.board:
+        for row in board:
             for col in row:
                 if col == "-":
                     return None
@@ -202,20 +202,28 @@ class OthelloBot:
 
 
 if __name__ == '__main__':
+    # Create a test board.
+    board_size = 8
+    board = [['-' for j in range(board_size)] for i in range(board_size)]
+    board[3][3] = 'B'
+    board[3][4] = 'W'
+    board[4][3] = 'W'
+    board[4][4] = 'B'
+
     test = OthelloBot('B')
     player = 'B'
     winner = None
 
     while winner is None:
-        best_move = test.get_move(test.board)
-        # print('Best move: ' + str(best_move))
-        test.make_move(test.board, best_move, test.build_piece_hash(test.board))
+        best_move = test.get_move(board)
+        print("Color: " + test.color + ' Best move: ' + str(best_move))
+        test.make_move(board, best_move, test.build_piece_hash(board))
         if test.color == 'B':
             test.color = 'W'
         else:
             test.color = 'B'
-        # for i in test.board:
-        #     print(i)
-        # print()
-        winner = test.check_win()
-    # print(test.check_win())
+        for i in board:
+            print(i)
+        print()
+        winner = test.check_win(board)
+    print(test.check_win(board))
